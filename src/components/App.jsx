@@ -34,6 +34,7 @@ export const App = () => {
         }
       } catch (error) {
         setError(error.message);
+        console.log(error);
       } finally {
         setIsLoading(false);
       }
