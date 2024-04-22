@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import Button from './Button/Button';
 import ImageGallery from './ImageGallery/ImageGallery';
 import Loader from './Loader/Loader';
@@ -7,87 +7,69 @@ import { getSearchPicturesApi } from 'api/pictures/picturesApi';
 import Searchbar from './Searchbar/Searchbar';
 import { PER_PAGE } from 'api/api';
 import Modal from './Modal/Modal';
+import { useGlobalContext } from 'context/GlobalProvider';
 
-export class App extends Component {
-  state = {
-    pictures: [],
-    isLoading: false,
-    error: '',
-    searchValue: '',
-    page: 1,
-    largeImgURL: '',
-    isHidden: false,
-    isShowModal: false,
-  };
+export const App = () => {
+  const [pictures, setPictures] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [searchValue, setSearchValue] = useState('');
+  const [page, setPage] = useState(1);
+  const [largeImgURL, setLargeImgURL] = useState('');
+  const [isHidden, setIsHidden] = useState(false);
 
-  componentDidUpdate(_, prevState) {
-    const { page, searchValue } = this.state;
-    if (prevState.page !== page || prevState.searchValue !== searchValue)
-      this.getPictures();
-  }
+  const { isShowModal, toggleModal } = useGlobalContext();
 
-  getPictures = async () => {
-    try {
-      this.setState({ isLoading: true, error: '' });
-      const data = await getSearchPicturesApi(
-        this.state.searchValue,
-        this.state.page
-      );
-      this.setState(prevState => ({
-        totalPictures: data.totalHits,
-        pictures: [...prevState.pictures, ...data.hits],
-      }));
-      if (data.hits.length > PER_PAGE - 1) {
-        this.setState({ isHidden: true });
-      } else {
-        this.setState({ isHidden: false });
+  useEffect(() => {
+    const getPictures = async () => {
+      try {
+        setIsLoading(true);
+        setError('');
+        const data = await getSearchPicturesApi(searchValue, page);
+        setPictures(pictures => [...pictures, ...data.hits]);
+        if (data.hits.length > PER_PAGE - 1) {
+          setIsHidden(true);
+        } else {
+          setIsHidden(false);
+        }
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      this.setState({ error: error.message });
-    } finally {
-      this.setState({ isLoading: false });
-    }
+    };
+    searchValue && getPictures();
+  }, [page, searchValue]);
+
+  const handleSubmit = value => {
+    setSearchValue(value);
+    setPictures([]);
+    setPage(1);
   };
 
-  handleSubmit = searchValue => {
-    this.setState({ searchValue, pictures: [], page: 1 });
+  const handleClick = () => setPage(prev => prev + 1);
+
+  const handleFinishLoad = () => setIsLoading(false);
+
+  const getLargeImgURL = imgURL => {
+    setLargeImgURL(imgURL);
+    setIsLoading(true);
+    toggleModal();
   };
 
-  handleClick = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
-  };
-
-  handleFinishLoad = () => {
-    this.setState({ isLoading: false });
-  };
-
-  toggleModal = () => {
-    this.setState(prevState => ({ isShowModal: !prevState.isShowModal }));
-  };
-
-  getLargeImgURL = imgURL => {
-    this.setState({ largeImgURL: imgURL, isLoading: true });
-    this.toggleModal();
-  };
-
-  render() {
-    const { isLoading, pictures, isHidden, isShowModal, largeImgURL } =
-      this.state;
-
-    return (
-      <Wrapper>
-        <Searchbar onSubmit={this.handleSubmit} />
-        {isLoading && <Loader />}
-        <ImageGallery pictures={pictures} handleGetURL={this.getLargeImgURL} />
-        {isHidden && <Button action={this.handleClick}>Load more</Button>}
-        {isShowModal && (
-          <Modal
-            closeModal={this.toggleModal}
-            imgURL={largeImgURL}
-            statusLoading={this.handleFinishLoad}
-          />
-        )}
-      </Wrapper>
-    );
-  }
-}
+  return (
+    <Wrapper>
+      <Searchbar onSubmit={handleSubmit} />
+      {isLoading && <Loader />}
+      <ImageGallery pictures={pictures} handleGetURL={getLargeImgURL} />
+      {isHidden && <Button action={handleClick}>Load more</Button>}
+      {isShowModal && (
+        <Modal
+          closeModal={toggleModal}
+          imgURL={largeImgURL}
+          statusLoading={handleFinishLoad}
+        />
+      )}
+    </Wrapper>
+  );
+};
