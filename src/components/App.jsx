@@ -12,7 +12,6 @@ import { useGlobalContext } from 'context/GlobalProvider';
 export const App = () => {
   const [pictures, setPictures] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [_error, setError] = useState(null);
   const [searchValue, setSearchValue] = useState('');
   const [page, setPage] = useState(1);
   const [largeImgURL, setLargeImgURL] = useState('');
@@ -24,7 +23,6 @@ export const App = () => {
     const getPictures = async () => {
       try {
         setIsLoading(true);
-        setError('');
         const data = await getSearchPicturesApi(searchValue, page);
         setPictures(pictures => [...pictures, ...data.hits]);
         if (data.hits.length > PER_PAGE - 1) {
@@ -33,7 +31,7 @@ export const App = () => {
           setIsHidden(false);
         }
       } catch (error) {
-        setError(error.message);
+        console.log(error.message);
       } finally {
         setIsLoading(false);
       }
