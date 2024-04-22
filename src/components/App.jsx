@@ -12,7 +12,7 @@ import { useGlobalContext } from 'context/GlobalProvider';
 export const App = () => {
   const [pictures, setPictures] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [_error, setError] = useState(null);
   const [searchValue, setSearchValue] = useState('');
   const [page, setPage] = useState(1);
   const [largeImgURL, setLargeImgURL] = useState('');
@@ -34,7 +34,6 @@ export const App = () => {
         }
       } catch (error) {
         setError(error.message);
-        console.log(error);
       } finally {
         setIsLoading(false);
       }
