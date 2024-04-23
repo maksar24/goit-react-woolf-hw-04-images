@@ -6,13 +6,13 @@ const Modal = ({ imgURL, statusLoading }) => {
   const { toggleModal: closeModal } = useGlobalContext();
 
   useEffect(() => {
+    const handleEsc = ({ code }) => code === 'Escape' && closeModal();
+
     window.addEventListener('keydown', handleEsc);
     return () => window.addEventListener('keydown', handleEsc);
-  });
+  }, [closeModal]);
 
   const handleClose = e => e.target === e.currentTarget && closeModal();
-
-  const handleEsc = ({ code }) => code === 'Escape' && closeModal();
 
   return (
     <Overlay onClick={handleClose}>
